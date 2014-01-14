@@ -189,7 +189,10 @@ var SnapChart = function(domId, options){
 		var plotPointWidth = extremes.plots.width;
 		var path = '';
 		var first = true;
-		var plots = _.map(options.data, function(value, key){
+		var preAnimationPlots = [];
+		var dataPlots = [];
+		var yMaxString = extremes.positions.axis.max.y;
+		_.each(options.data, function(value, key){
 			var pathLetter = 'L';
 			if(first){
 				pathLetter = 'M';
@@ -197,37 +200,48 @@ var SnapChart = function(domId, options){
 			}
 			var x = plotPointWidth/2 + (plotPointWidth*key) + extremes.positions.axis.min.x;
 			var y = calculteScaledY(value);
-			return pathLetter + x.toString() + ',' + y.toString();
-		}).join(',');
-		var path = snap.path(plots);
+			dataPlots.push(pathLetter + x.toString() + ',' + y.toString());	
+			preAnimationPlots.push(pathLetter + x.toString() + ',' + yMaxString);
+		});
+		var path = snap.path(preAnimationPlots.join(','))
 		path.attr({fill:'transparent', stroke:'rgba(0,175,255,.5)',strokeWidth:3})
+		path.animate({d: dataPlots.join(',')}, 350, mina.easeout);
+
 	};
 	
 	function drawArea(){
 		var plotPointWidth = extremes.plots.width;
 		var path = '';
-		var first = true;
-		var plots = _.map(options.data, function(value, key){
+		var preAnimationPlots = [];
+		var dataPlots = [];
+		var yMaxString = extremes.positions.axis.max.y;
+		_.each(options.data, function(value, key){
 			var pathLetter = 'L';
 			var x = plotPointWidth/2 + (plotPointWidth*key) + extremes.positions.axis.min.x;
 			var y = calculteScaledY(value);
-			return pathLetter + x.toString() + ',' + y.toString();
+			dataPlots.push(pathLetter + x.toString() + ',' + y.toString());	
+			preAnimationPlots.push(pathLetter + x.toString() + ',' + yMaxString);
 		});
-		plots.unshift(
+		var firstPoint = (
 			'M'+ 
 			(plotPointWidth/2 + extremes.positions.axis.min.x).toString() +
 			','  + 
-			extremes.positions.axis.max.y.toString()
+			yMaxString
 		);
-		plots.push(
+		dataPlots.unshift(firstPoint);
+		preAnimationPlots.unshift(firstPoint);
+
+		var lastPoint = (
 			'L'+ 
 			(plotPointWidth/2 + (plotPointWidth * (options.data.length -1)) + extremes.positions.axis.min.x).toString() +
 			',' +
-			 + extremes.positions.axis.max.y.toString()
+			 yMaxString
 		);
-		console.log(plots);
-		var path = snap.path(plots.join(','));
+		dataPlots.push(lastPoint);
+		var path = snap.path(preAnimationPlots.join(','))
 		path.attr({fill:'rgba(0,175,255,.5)'})
+		path.animate({d: dataPlots.join(',')}, 350, mina.easeout);
+
 	};
 	function drawPie(){
 		console.log('pie chart not implemented yet');

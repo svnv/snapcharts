@@ -13,7 +13,8 @@ var SnapChart = function(domId, options){
 	}
 
 	var implemetations = {
-		'bar': drawBar
+		'bar': drawBar,
+		'line': drawLine
 	}
 
 	function init(){
@@ -183,7 +184,22 @@ var SnapChart = function(domId, options){
 	};
 
 	function drawLine(){
-		console.log('line chart not implemented yet');
+		var plotPointWidth = extremes.plots.width;
+		var path = '';
+		var first = true;
+		var plots = _.map(options.data, function(value, key){
+			var pathLetter = 'L';
+			if(first){
+				pathLetter = 'M';
+				first = false;
+			}
+			var x = plotPointWidth/2 + (plotPointWidth*key) + extremes.positions.axis.min.x;
+			var y = calculteScaledY(value);
+			return pathLetter + x.toString() + ',' + y.toString();
+		}).join(',');
+		var path = snap.path(plots);
+		path.attr({fill:'transparent', stroke:'rgba(0,175,255,.5)',strokeWidth:3})
+
 	};
 
 	function drawPie(){

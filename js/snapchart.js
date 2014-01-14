@@ -9,12 +9,14 @@ var SnapChart = function(domId, options){
 	this.types = {
 		bar: 'bar',
 		line: 'line',
-		pie: 'pie'
+		pie: 'pie',
+		area: 'area'
 	}
 
 	var implemetations = {
 		'bar': drawBar,
-		'line': drawLine
+		'line': drawLine,
+		'area': drawArea
 	}
 
 	function init(){
@@ -199,9 +201,34 @@ var SnapChart = function(domId, options){
 		}).join(',');
 		var path = snap.path(plots);
 		path.attr({fill:'transparent', stroke:'rgba(0,175,255,.5)',strokeWidth:3})
-
 	};
-
+	
+	function drawArea(){
+		var plotPointWidth = extremes.plots.width;
+		var path = '';
+		var first = true;
+		var plots = _.map(options.data, function(value, key){
+			var pathLetter = 'L';
+			var x = plotPointWidth/2 + (plotPointWidth*key) + extremes.positions.axis.min.x;
+			var y = calculteScaledY(value);
+			return pathLetter + x.toString() + ',' + y.toString();
+		});
+		plots.unshift(
+			'M'+ 
+			(plotPointWidth/2 + extremes.positions.axis.min.x).toString() +
+			','  + 
+			extremes.positions.axis.max.y.toString()
+		);
+		plots.push(
+			'L'+ 
+			(plotPointWidth/2 + (plotPointWidth * (options.data.length -1)) + extremes.positions.axis.min.x).toString() +
+			',' +
+			 + extremes.positions.axis.max.y.toString()
+		);
+		console.log(plots);
+		var path = snap.path(plots.join(','));
+		path.attr({fill:'rgba(0,175,255,.5)'})
+	};
 	function drawPie(){
 		console.log('pie chart not implemented yet');
 	};

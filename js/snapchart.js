@@ -199,7 +199,7 @@ var SnapChart = function(domId, options){
 				first = false;
 			}
 			var x = plotPointWidth/2 + (plotPointWidth*key) + extremes.positions.axis.min.x;
-			var y = calculteScaledY(value);
+			var y = extremes.positions.axis.max.y - calculteScaledY(value);
 			dataPlots.push(pathLetter + x.toString() + ',' + y.toString());	
 			preAnimationPlots.push(pathLetter + x.toString() + ',' + yMaxString);
 		});
@@ -218,7 +218,7 @@ var SnapChart = function(domId, options){
 		_.each(options.data, function(value, key){
 			var pathLetter = 'L';
 			var x = plotPointWidth/2 + (plotPointWidth*key) + extremes.positions.axis.min.x;
-			var y = calculteScaledY(value);
+			var y = extremes.positions.axis.max.y - calculteScaledY(value);
 			dataPlots.push(pathLetter + x.toString() + ',' + y.toString());	
 			preAnimationPlots.push(pathLetter + x.toString() + ',' + yMaxString);
 		});

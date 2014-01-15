@@ -3,7 +3,10 @@ console.log('Starting app.js');
 var options = {
 	type:'bar',
 	labels:['jan','feb','mar','apr','may','jun','jul','aug'],
-	data:[.90,.20,.40,.35,.37,.50,.50,.50]
+	data:[{
+		values: [.90,.20,.40,.35,.37,.50,.50,.50],
+		color: 'rgba(0,175,255,.5)'
+	}]
 }
 var chart = SnapChart('#bar-chart',options);
 var options = {
@@ -11,7 +14,10 @@ var options = {
 	width:500,
 	type:'line',
 	labels:['jan','feb','mar','apr','may','jun','jul','aug'],
-	data:[.90,.20,.40,.35,.37,.50,.50,.50]
+	data:[{
+		values: [.90,.20,.40,.35,.37,.50,.50,.50],
+		color: 'rgba(0,175,255,.5)'
+	}]
 }
 var chart = SnapChart('#line-chart',options);
 var options = {
@@ -19,7 +25,10 @@ var options = {
 	width:500,
 	type:'area',
 	labels:['jan','feb','mar','apr','may','jun','jul','aug'],
-	data:[.90,.20,.40,.35,.37,.50,.50,.50]
+	data:[{
+		values: [.90,.20,.40,.35,.37,.50,.50,.50],
+		color: 'rgba(0,175,255,.5)'
+	}	]
 }
 var chart = SnapChart('#area-chart',options);
 

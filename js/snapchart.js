@@ -21,13 +21,19 @@ var SnapChart = function(domId, options){
 	}
 
 	function init(){
-		populateExtremes();
-		drawAxis();
-		drawChart();
-	};
+		populateExtremes(options);
+		drawAxis(options.type);
+		for (var i = 0, len = options.data.length; i< len; i++){
+			var dataSet = options.data[i];
+			drawChart(dataSet);
+		}
+	}
 
-	function populateExtremes(){
+	function populateExtremes(options){
 		
+		var dataLimits = getDataLimits(options.data);
+		console.log(dataLimits);
+
 		extremes = {
 			positions:{
 				axis:{
@@ -43,15 +49,15 @@ var SnapChart = function(domId, options){
 			},
 			data:{
 				limits: {
-					min:0,
-					max: _.reduce(options.data,function(memo,num){return num > memo ?num : memo;},0)
+					min: dataLimits.min,
+					max: dataLimits.max
 				}
 			}				
 		};
 
 		// adding values calulcated from initial dataset
 		extremes.plots = {
-			width: ((extremes.positions.axis.max.x - extremes.positions.axis.min.x) / options.data.length)
+			width: ((extremes.positions.axis.max.x - extremes.positions.axis.min.x) / dataLimits.len)
 		};
 
 		extremes.yLabels = calculateYaxisSteps();
@@ -59,8 +65,29 @@ var SnapChart = function(domId, options){
 
 	};
 
-	function calculateYaxisSteps(){
+	function getDataLimits(data){
+		var maxLen = 0;
+		var maxData = data[0].values[0];
+		for(var i = 0, len = data.length; i < len; i++){
+			var dataSet = data[i];
+			result = getDataSetLimits(dataSet);
+			maxLen = maxLen < result.len ? result.len : maxLen;
+			maxData = maxData < result.max ? result.max : maxData;
+		}
+		return {len:maxLen, max:maxData, min:0};
+	}
 
+	function getDataSetLimits(dataSet){
+		var len = dataSet.values.length;
+		var max = dataSet.values[0];
+		for (var i = 1; i<len;i++){
+			var val = dataSet.values[i];
+			max = max < val ? val : max;
+		}
+		return {len:len, max:max};
+	}
+
+	function calculateYaxisSteps(){
 		var numSteps,
 			min,
 			max,
@@ -111,7 +138,8 @@ var SnapChart = function(domId, options){
 		return (extremes.positions.axis.max.y - extremes.positions.axis.min.y)*ratio;
 	}
 
-	function drawAxis(){
+	function drawAxis(type){
+		if(type === 'pie') return;
 		var axisLineOptions = {stroke:'rgba(0,0,0,.5)', strokeWidth:1} 
 		
 		axis.y = snap.line(
@@ -161,39 +189,39 @@ var SnapChart = function(domId, options){
 
 	};
 
-	function drawChart(){
+	function drawChart(dataSet){
 		var type = options.type || that.types.bar;
-		implemetations[type]();
+		implemetations[type](dataSet);
 	};
 
-	function drawBar(){
+	function drawBar(dataSet){
 		var barWidthRatio = .9;
 		var barMarginRatio = .05;
 
 		var barWidth = extremes.plots.width*barWidthRatio;
 		var barMarginWidth = extremes.plots.width*barMarginRatio;
 
-		plots = _.map(options.data, function(value, key){
+		plots = _.map(dataSet.values, function(value, key){
 			var x = extremes.positions.axis.min.x + (key*barWidth) + (key*2*barMarginWidth) + barMarginWidth;
 			var y = extremes.positions.axis.max.y
 			var width = barWidth;
 			var height = (calculteScaledY(value));
 			// var bar = snap.rect(x, y - height, width, height);
 			var bar = snap.rect(x, y, width, 0);
-			bar.attr({fill:'rgba(0,175,255,.5)'});
+			bar.attr({fill:dataSet.color});
 			bar.animate({y:y-height,height:height}, 350, mina.easeout);
 			return bar;
 		});
 	};
 
-	function drawLine(){
+	function drawLine(dataSet){
 		var plotPointWidth = extremes.plots.width;
 		var path = '';
 		var first = true;
 		var preAnimationPlots = [];
 		var dataPlots = [];
 		var yMaxString = extremes.positions.axis.max.y;
-		_.each(options.data, function(value, key){
+		_.each(dataSet.values, function(value, key){
 			var pathLetter = 'L';
 			if(first){
 				pathLetter = 'M';
@@ -205,18 +233,18 @@ var SnapChart = function(domId, options){
 			preAnimationPlots.push(pathLetter + x.toString() + ',' + yMaxString);
 		});
 		var path = snap.path(preAnimationPlots.join(','))
-		path.attr({fill:'transparent', stroke:'rgba(0,175,255,.5)',strokeWidth:3})
+		path.attr({fill:'transparent', stroke:dataSet.color,strokeWidth:3})
 		path.animate({d: dataPlots.join(',')}, 350, mina.easeout);
 
 	};
 	
-	function drawArea(){
+	function drawArea(dataSet){
 		var plotPointWidth = extremes.plots.width;
 		var path = '';
 		var preAnimationPlots = [];
 		var dataPlots = [];
 		var yMaxString = extremes.positions.axis.max.y;
-		_.each(options.data, function(value, key){
+		_.each(dataSet.values, function(value, key){
 			var pathLetter = 'L';
 			var x = plotPointWidth/2 + (plotPointWidth*key) + extremes.positions.axis.min.x;
 			var y = extremes.positions.axis.max.y - calculteScaledY(value);
@@ -234,15 +262,14 @@ var SnapChart = function(domId, options){
 
 		var lastPoint = (
 			'L'+ 
-			(plotPointWidth/2 + (plotPointWidth * (options.data.length -1)) + extremes.positions.axis.min.x).toString() +
+			(plotPointWidth/2 + (plotPointWidth * (dataSet.values.length -1)) + extremes.positions.axis.min.x).toString() +
 			',' +
 			 yMaxString
 		);
 		dataPlots.push(lastPoint);
 		var path = snap.path(preAnimationPlots.join(','))
-		path.attr({fill:'rgba(0,175,255,.5)'})
+		path.attr({fill:dataSet.color})
 		path.animate({d: dataPlots.join(',')}, 350, mina.easeout);
-
 	};
 	function drawPie(){
 		console.log('pie chart not implemented yet');

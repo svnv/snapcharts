@@ -4,7 +4,8 @@ var SnapChart = function(domId, options){
 		extremes = {},
 		axis = {},
 		plots = [],
-		yLabelTransform = options.yLabelTransform || function(y){return y.toString();};
+		yLabelTransform = options.yLabelTransform || function(y){return y.toString();},
+		domNode = document.getElementById(domId.replace('#',''));
 
 	this.types = {
 		bar: 'bar',
@@ -31,12 +32,12 @@ var SnapChart = function(domId, options){
 			positions:{
 				axis:{
 					min:{
-						x:40,
+						x:30,
 						y:10
 					},
 					max:{
-						x:400,
-						y:240
+						x:options.width || domNode.offsetWidth -10,
+						y:options.height || domNode.offsetHeight - 30,	
 					}		
 				}	
 			},

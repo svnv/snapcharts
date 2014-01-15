@@ -14,6 +14,7 @@
     <link href="css/bootstrap.css" rel="stylesheet">
 
     <!-- Site css -->
+    <link href="css/prism.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
 
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -37,6 +38,44 @@
         <p class="lead">A simple bar chart.</p>
         <svg id="bar-chart" class="chart">
         </svg>
+        <pre><code class="language-javascript">        
+  var options = {
+    height:200,
+    width:200,
+    type:'bar',
+    labels:['jan','feb','mar','apr','may','jun','jul','aug'],
+    data:[.90,.20,.40,.35,.37,.50,.50,.50]
+  }
+  var chart = SnapChart('#bar-chart',options);
+        </code></pre>
+        <h2>Line chart</h2>
+        <p class="lead">A simple line chart.</p>
+        <svg id="line-chart" class="chart">
+        </svg>
+        <pre><code class="language-javascript">        
+  var options = {
+    height:200,
+    width:200,
+    type:'line',
+    labels:['jan','feb','mar','apr','may','jun','jul','aug'],
+    data:[.90,.20,.40,.35,.37,.50,.50,.50]
+  }
+  var chart = SnapChart('#line-chart',options);
+        </code></pre>
+        <h2>Area chart</h2>
+        <p class="lead">A simple area chart.</p>
+        <svg id="area-chart" class="chart">
+        </svg>
+        <pre><code class="language-javascript">        
+  var options = {
+    height:200,
+    width:200,
+    type:'area',
+    labels:['jan','feb','mar','apr','may','jun','jul','aug'],
+    data:[.90,.20,.40,.35,.37,.50,.50,.50]
+  }
+  var chart = SnapChart('#area-chart',options);
+        </code></pre>
     </div>
 
     <!-- Bootstrap core JavaScript
@@ -45,6 +84,7 @@
     <script type="text/JavaScript" src="js/underscore.js"></script>
     <script type="text/JavaScript" src="js/snap.svg.js"></script>
     <script type="text/JavaScript" src="js/snapchart.js"></script>
+    <script type="text/JavaScript" src="js/prism.js"></script>
     <script type="text/JavaScript" src="js/app.js"></script>
 
   </body>

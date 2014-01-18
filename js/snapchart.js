@@ -12,27 +12,31 @@ var SnapChart = function(domId, options){
 		line: 'line',
 		pie: 'pie',
 		area: 'area'
-	}
+	};
 
 	var implemetations = {
 		'bar': drawBar,
 		'line': drawLine,
-		'area': drawArea
-	}
+		'area': drawArea,
+		'pie': drawPie
+	};
 
 	function init(){
-		populateExtremes(options);
-		drawAxis(options.type);
-		for (var i = 0, len = options.data.length; i< len; i++){
-			var dataSet = options.data[i];
-			drawChart(dataSet);
+		populateExtremes(options);	
+		if(options.type === 'pie'){
+			drawPie();
+		} else {
+			drawAxis();
+			for (var i = 0, len = options.data.length; i< len; i++){
+				var dataSet = options.data[i];
+				drawChart(dataSet);
+			}
 		}
 	}
 
 	function populateExtremes(options){
 		
 		var dataLimits = getDataLimits(options.data);
-		console.log(dataLimits);
 
 		extremes = {
 			positions:{
@@ -61,9 +65,8 @@ var SnapChart = function(domId, options){
 		};
 
 		extremes.yLabels = calculateYaxisSteps();
-		console.log(extremes);
 
-	};
+	}
 
 	function getDataLimits(data){
 		var maxLen = 0;
@@ -88,49 +91,40 @@ var SnapChart = function(domId, options){
 	}
 
 	function calculateYaxisSteps(){
+		// this might seem counter intuitive but using neg significant magnitude
+		// to avoid float errors for positive numbers less than 1
 		var numSteps,
 			min,
 			max,
-			steps = [];
+			steps = [],
+			negSignificantMagnitude,
+			significantDigit;
 
 		var dataLimitMaxString = extremes.data.limits.max.toString();
 		if(extremes.data.limits.max > 1){
-			var mostSignificantDigit = parseInt(dataLimitMaxString[0]);
-			var numSteps = mostSignificantDigit + 1;
-			// var exponent = dataLimitMaxString.length == 1 ? 1 : dataLimitMaxString.length - 1;
-			var exponent = Math.floor(Math.log(extremes.data.limits.max)/Math.log(10))
-			var significantMagnitude = Math.pow(10, exponent);
-			steps = [];
-			for (var i = 0; i <= numSteps; i++){
-				var step = i*significantMagnitude;
-				steps.push(step);
-			}
-			min = steps[0];
-			max = steps[steps.length-1];
+			significantDigit = parseInt(dataLimitMaxString[0]);
+			numSteps = significantDigit + 1;
+			var exponent = Math.floor(Math.log(extremes.data.limits.max)/Math.log(10));
+			negSignificantMagnitude = 1/Math.pow(10, exponent);
 		} else if (extremes.data.limits.max>0){
-			var significantIndex = 2,
-				digit = '';
-			for(; significantIndex < dataLimitMaxString.length; significantIndex++){
-				digit = dataLimitMaxString[significantIndex];
-				if(dataLimitMaxString !== '0'){
-					break;
-				}
-			}
-			var significantMagnitude = Math.pow(10,significantIndex-1);
-			var numSteps = parseInt(digit)+1;
-			for (var i = 0; i <= numSteps; i++){
-				var step = i/significantMagnitude;
+			var negExponent = 0;
+			do{
+				negExponent++;
+				significantDigit = Math.floor(extremes.data.limits.max*Math.pow(10,negExponent));
+			} while(significantDigit < 1);
+			negSignificantMagnitude = Math.pow(10,negExponent);
+		}
+		numSteps = significantDigit+1;	
+		for (var i = 0; i <= numSteps; i++){
+				var step = i/negSignificantMagnitude;
 				steps.push(step);
 			}
-			min = steps[0];
-			max = steps[steps.length-1];
-		}
 		return {
 			numberOfSteps: numSteps,
 			steps: steps,
-			min: min,
-			max: max
-		}
+			min: steps[0],
+			max: steps[steps.length-1]
+		};
 	}
 
 	function calculteScaledY(y){
@@ -138,9 +132,8 @@ var SnapChart = function(domId, options){
 		return (extremes.positions.axis.max.y - extremes.positions.axis.min.y)*ratio;
 	}
 
-	function drawAxis(type){
-		if(type === 'pie') return;
-		var axisLineOptions = {stroke:'rgba(0,0,0,.5)', strokeWidth:1} 
+	function drawAxis(){
+		var axisLineOptions = {stroke:'rgba(0,0,0,.5)', strokeWidth:1};
 		
 		axis.y = snap.line(
 			extremes.positions.axis.min.x,
@@ -162,13 +155,12 @@ var SnapChart = function(domId, options){
 			var x = extremes.positions.axis.min.x + xOffset + (extremes.plots.width*i);
 			var y = extremes.positions.axis.max.y + 15;
 			var text = snap.text(x, y, label);
-			text.attr({'text-anchor':'middle'})
+			text.attr({'text-anchor':'middle'});
 			return text;
 		});
 
 		// yaxis labels		
 		axis.yLabels = _.map(extremes.yLabels.steps, function(step, i){
-			console.log(step);
 			var x = extremes.positions.axis.min.x - 5;
 			var y = extremes.positions.axis.max.y - calculteScaledY(step);
 			var label = yLabelTransform(step);
@@ -178,32 +170,32 @@ var SnapChart = function(domId, options){
 		});
 
 		// yaxis gridlines
-		var axisGridLineOptions = {stroke:'rgba(0,0,0,.1)', strokeWidth:1} 
+		var axisGridLineOptions = {stroke:'rgba(0,0,0,.1)', strokeWidth:1};
 
 		axis.yGridLines = _.map(extremes.yLabels.steps, function(step, i){
 			if(step === 0) return;
 			var y = extremes.positions.axis.max.y - calculteScaledY(step);
 			var line = snap.line(extremes.positions.axis.min.x, y, extremes.positions.axis.max.x, y);
 			line.attr(axisGridLineOptions);
-		})
+		});
 
-	};
+	}
 
 	function drawChart(dataSet){
 		var type = options.type || that.types.bar;
 		implemetations[type](dataSet);
-	};
+	}
 
 	function drawBar(dataSet){
-		var barWidthRatio = .9;
-		var barMarginRatio = .05;
+		var barWidthRatio = 0.9,
+			barMarginRatio = 0.05;
 
 		var barWidth = extremes.plots.width*barWidthRatio;
 		var barMarginWidth = extremes.plots.width*barMarginRatio;
 
 		plots = _.map(dataSet.values, function(value, key){
 			var x = extremes.positions.axis.min.x + (key*barWidth) + (key*2*barMarginWidth) + barMarginWidth;
-			var y = extremes.positions.axis.max.y
+			var y = extremes.positions.axis.max.y;
 			var width = barWidth;
 			var height = (calculteScaledY(value));
 			// var bar = snap.rect(x, y - height, width, height);
@@ -212,7 +204,7 @@ var SnapChart = function(domId, options){
 			bar.animate({y:y-height,height:height}, 350, mina.easeout);
 			return bar;
 		});
-	};
+	}
 
 	function drawLine(dataSet){
 		var plotPointWidth = extremes.plots.width;
@@ -232,11 +224,11 @@ var SnapChart = function(domId, options){
 			dataPlots.push(pathLetter + x.toString() + ',' + y.toString());	
 			preAnimationPlots.push(pathLetter + x.toString() + ',' + yMaxString);
 		});
-		var path = snap.path(preAnimationPlots.join(','))
-		path.attr({fill:'transparent', stroke:dataSet.color,strokeWidth:3})
+		path = snap.path(preAnimationPlots.join(','));
+		path.attr({fill:'transparent', stroke:dataSet.color,strokeWidth:3});
 		path.animate({d: dataPlots.join(',')}, 350, mina.easeout);
 
-	};
+	}
 	
 	function drawArea(dataSet){
 		var plotPointWidth = extremes.plots.width;
@@ -264,21 +256,36 @@ var SnapChart = function(domId, options){
 			'L'+ 
 			(plotPointWidth/2 + (plotPointWidth * (dataSet.values.length -1)) + extremes.positions.axis.min.x).toString() +
 			',' +
-			 yMaxString
+			yMaxString
 		);
 		dataPlots.push(lastPoint);
-		var path = snap.path(preAnimationPlots.join(','))
-		path.attr({fill:dataSet.color})
+		path = snap.path(preAnimationPlots.join(','));
+		path.attr({fill:dataSet.color});
 		path.animate({d: dataPlots.join(',')}, 350, mina.easeout);
-	};
+	}
+
 	function drawPie(){
 		console.log('pie chart not implemented yet');
-	};
+
+		var sum = _.reduce(data, function(d,m){
+			return m+ d.values[0];
+		},0);
+		var sumDeg = 0;
+		var data = options.data;
+		for (var i = 0, len = data.length; i < len; i++){
+			var dataSet = data[i];
+			var deg = dataSet.values[0]/sum * Math.PI;
+			console.log('deg');
+		}
+		// draw one slice for each datapoint
+		// mask with a circle
+		// animate circle size
+	}
 
 	this.update = function(options){
 		console.log('not implemeted yet');
-	}
+	};
 
 	init();
 	return that;
-}
+};

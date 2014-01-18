@@ -86,6 +86,28 @@
   }
   var chart = SnapChart('#area-chart',options);
         </code></pre>
+        <h2>Pie chart</h2>
+        <p class="lead">A simple pie chart.</p>
+        <svg id="pie-chart" class="chart">
+        </svg>
+        <pre><code class="language-javascript">        
+  var options = {
+    height:250,
+    width:500,
+    type:'pie',
+    data:[{
+      values: [.65],
+      color: 'rgba(0,175,255,.5)',
+      name: 'Segment A'
+    },
+    {
+      values: [.35],
+      color: 'rgba(175,255,0,.5)',
+      name: 'Segment B'
+    }]
+  }
+  var chart = SnapChart('#pie-chart',options);
+        </code></pre>
     </div>
 
     <!-- Bootstrap core JavaScript

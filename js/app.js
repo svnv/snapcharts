@@ -32,6 +32,23 @@ var options = {
 }
 var chart = SnapChart('#area-chart',options);
 
+  var options = {
+    height:250,
+    width:500,
+    type:'pie',
+    data:[{
+      values: [.65],
+      color: 'rgba(0,175,255,.5)',
+      name: 'Segment A'
+    },
+    {
+      values: [.35],
+      color: 'rgba(175,255,0,.5)',
+      name: 'Segment B'
+    }]
+  }
+  var chart = SnapChart('#pie-chart',options);
+
 // reloading site on focus so i don't have to press cmd-r
 window.addEventListener("focus", function(event) {
 	window.location.reload();

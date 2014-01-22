@@ -33,19 +33,25 @@ var options = {
 var chart = SnapChart('#area-chart',options);
 
   var options = {
-    height:250,
-    width:500,
     type:'pie',
     data:[{
-      values: [.65],
-      color: 'rgba(0,175,255,.5)',
+      values: [.1],
+      color: 'rgba(0,0,0,.1)',
       name: 'Segment A'
     },
     {
-      values: [.35],
-      color: 'rgba(175,255,0,.5)',
+      values: [.2],
+      color: 'rgba(0,0,0,.2)',
       name: 'Segment B'
-    }]
+    },
+
+    {
+      values: [.3],
+      color: 'rgba(0,0,0,.3)',
+      name: 'Segment C'
+    }
+
+    ]
   }
   var chart = SnapChart('#pie-chart',options);
 

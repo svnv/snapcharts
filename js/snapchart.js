@@ -49,6 +49,16 @@ var SnapChart = function(domId, options){
 						x:options.width || domNode.offsetWidth -10,
 						y:options.height || domNode.offsetHeight - 30,	
 					}		
+				},
+				dom:{
+					min:{
+						x:0,
+						y:0
+					},
+					max:{
+						x:options.width || domNode.offsetWidth,
+						y:options.height || domNode.offsetHeight,	
+					}	
 				}	
 			},
 			data:{
@@ -266,20 +276,52 @@ var SnapChart = function(domId, options){
 
 	function drawPie(){
 		console.log('pie chart not implemented yet');
-
-		var sum = _.reduce(data, function(d,m){
+		var sum = _.reduce(options.data, function(m,d){
 			return m+ d.values[0];
 		},0);
+
+		console.log(sum);
 		var sumDeg = 0;
 		var data = options.data;
+
+		var origo ={
+			x:((extremes.positions.dom.max.x - extremes.positions.dom.min.x)/2),
+			y:((extremes.positions.dom.max.y - extremes.positions.dom.min.y)/2)
+		};
+
+		var radius = origo.x > origo.y ? origo.y - 10 : origo.x - 10;
+
 		for (var i = 0, len = data.length; i < len; i++){
 			var dataSet = data[i];
-			var deg = dataSet.values[0]/sum * Math.PI;
-			console.log('deg');
+			var ratio  = dataSet.values[0]/sum;
+			if (ratio < 1){
+				var deg = ratio * 2 * Math.PI;
+				var xto = radius*Math.cos(deg);
+				var yto = radius*Math.sin(deg);
+				var flag1 = deg > Math.PI ? 0:1;
+				var flag2 = deg < Math.PI ? 0:1;
+				var path = [
+					'M'+(origo.x).toString(),
+					origo.y,
+					'L'+(origo.x+radius).toString(),
+					origo.y,
+					'A'+(radius).toString(),
+					radius,
+					0, flag2, 1,
+					origo.x+xto,origo.y+yto,		
+					'Z'
+				];
+				var p = snap.path(path.join(','));
+				p.attr({fill:dataSet.color});
+				p.animate( { transform: "r" + (-90+(sumDeg*180/Math.PI))  +","+origo.x+","+origo.y }, 500 );
+				sumDeg += deg;
+			} else{
+				var c = snap.circle(origo.x, origo.y, 0);
+				c.attr({fill:dataSet.color});
+				c.animate({r:radius},500);
+			}
 		}
-		// draw one slice for each datapoint
-		// mask with a circle
-		// animate circle size
+		
 	}
 
 	this.update = function(options){

@@ -29,7 +29,7 @@ var SnapChart = function(domId, options){
 			drawAxis();
 			for (var i = 0, len = options.data.length; i< len; i++){
 				var dataSet = options.data[i];
-				drawChart(dataSet);
+				drawChart(dataSet, i);
 			}
 		}
 	}
@@ -191,20 +191,22 @@ var SnapChart = function(domId, options){
 
 	}
 
-	function drawChart(dataSet){
+	function drawChart(dataSet, i){
 		var type = options.type || that.types.bar;
-		implemetations[type](dataSet);
+		implemetations[type](dataSet,i);
 	}
 
-	function drawBar(dataSet){
+	function drawBar(dataSet,i){
+		var numSeries = options.data.length; 
+
 		var barWidthRatio = 0.9,
 			barMarginRatio = 0.05;
 
-		var barWidth = extremes.plots.width*barWidthRatio;
+		var barWidth = extremes.plots.width*barWidthRatio/numSeries;
 		var barMarginWidth = extremes.plots.width*barMarginRatio;
 
 		plots = _.map(dataSet.values, function(value, key){
-			var x = extremes.positions.axis.min.x + (key*barWidth) + (key*2*barMarginWidth) + barMarginWidth;
+			var x = extremes.positions.axis.min.x + (key*barWidth*numSeries) + (barWidth*i) + (key*2*barMarginWidth) + barMarginWidth;
 			var y = extremes.positions.axis.max.y;
 			var width = barWidth;
 			var height = (calculteScaledY(value));
@@ -216,7 +218,7 @@ var SnapChart = function(domId, options){
 		});
 	}
 
-	function drawLine(dataSet){
+	function drawLine(dataSet,i){
 		var plotPointWidth = extremes.plots.width;
 		var path = '';
 		var first = true;

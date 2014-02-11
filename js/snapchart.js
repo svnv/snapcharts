@@ -7,6 +7,8 @@ var SnapChart = function(domId, options){
 		yLabelTransform = options.yLabelTransform || function(y){return y.toString();},
 		domNode = document.getElementById(domId.replace('#',''));
 
+	snap.clear();
+
 	this.types = {
 		bar: 'bar',
 		line: 'line',
@@ -22,7 +24,7 @@ var SnapChart = function(domId, options){
 	};
 
 	function init(){
-		populateExtremes(options);	
+		populateExtremes(options);  
 		if(options.type === 'pie'){
 			drawPie();
 		} else {
@@ -47,8 +49,8 @@ var SnapChart = function(domId, options){
 					},
 					max:{
 						x:options.width || domNode.offsetWidth -10,
-						y:options.height || domNode.offsetHeight - 30,	
-					}		
+						y:options.height || domNode.offsetHeight - 30,  
+					}       
 				},
 				dom:{
 					min:{
@@ -57,16 +59,16 @@ var SnapChart = function(domId, options){
 					},
 					max:{
 						x:options.width || domNode.offsetWidth,
-						y:options.height || domNode.offsetHeight,	
-					}	
-				}	
+						y:options.height || domNode.offsetHeight,   
+					}   
+				}   
 			},
 			data:{
 				limits: {
 					min: dataLimits.min,
 					max: dataLimits.max
 				}
-			}				
+			}               
 		};
 
 		// adding values calulcated from initial dataset
@@ -124,7 +126,7 @@ var SnapChart = function(domId, options){
 			} while(significantDigit < 1);
 			negSignificantMagnitude = Math.pow(10,negExponent);
 		}
-		numSteps = significantDigit+1;	
+		numSteps = significantDigit+1;  
 		for (var i = 0; i <= numSteps; i++){
 				var step = i/negSignificantMagnitude;
 				steps.push(step);
@@ -145,12 +147,12 @@ var SnapChart = function(domId, options){
 	function drawAxis(){
 		var axisLineOptions = {stroke:'rgba(0,0,0,.5)', strokeWidth:1};
 		
-		axis.y = snap.line(
-			extremes.positions.axis.min.x,
-			extremes.positions.axis.min.y,
-			extremes.positions.axis.min.x,
-			extremes.positions.axis.max.y);
-		axis.y.attr(axisLineOptions);
+		// axis.y = snap.line(
+		//  extremes.positions.axis.min.x,
+		//  extremes.positions.axis.min.y,
+		//  extremes.positions.axis.min.x,
+		//  extremes.positions.axis.max.y);
+		// axis.y.attr(axisLineOptions);
 
 		axis.x = snap.line(
 			extremes.positions.axis.min.x,
@@ -169,7 +171,7 @@ var SnapChart = function(domId, options){
 			return text;
 		});
 
-		// yaxis labels		
+		// yaxis labels     
 		axis.yLabels = _.map(extremes.yLabels.steps, function(step, i){
 			var x = extremes.positions.axis.min.x - 5;
 			var y = extremes.positions.axis.max.y - calculteScaledY(step);
@@ -212,7 +214,7 @@ var SnapChart = function(domId, options){
 			var height = (calculteScaledY(value));
 			// var bar = snap.rect(x, y - height, width, height);
 			var bar = snap.rect(x, y, width, 0);
-			bar.attr({fill:dataSet.color});
+			bar.attr({fill:getFill(dataSet)});
 			bar.animate({y:y-height,height:height}, 350, mina.easeout);
 			return bar;
 		});
@@ -233,7 +235,7 @@ var SnapChart = function(domId, options){
 			}
 			var x = plotPointWidth/2 + (plotPointWidth*key) + extremes.positions.axis.min.x;
 			var y = extremes.positions.axis.max.y - calculteScaledY(value);
-			dataPlots.push(pathLetter + x.toString() + ',' + y.toString());	
+			dataPlots.push(pathLetter + x.toString() + ',' + y.toString()); 
 			preAnimationPlots.push(pathLetter + x.toString() + ',' + yMaxString);
 		});
 		path = snap.path(preAnimationPlots.join(','));
@@ -252,7 +254,7 @@ var SnapChart = function(domId, options){
 			var pathLetter = 'L';
 			var x = plotPointWidth/2 + (plotPointWidth*key) + extremes.positions.axis.min.x;
 			var y = extremes.positions.axis.max.y - calculteScaledY(value);
-			dataPlots.push(pathLetter + x.toString() + ',' + y.toString());	
+			dataPlots.push(pathLetter + x.toString() + ',' + y.toString()); 
 			preAnimationPlots.push(pathLetter + x.toString() + ',' + yMaxString);
 		});
 		var firstPoint = (
@@ -272,17 +274,15 @@ var SnapChart = function(domId, options){
 		);
 		dataPlots.push(lastPoint);
 		path = snap.path(preAnimationPlots.join(','));
-		path.attr({fill:dataSet.color});
+		path.attr({fill:getFill(dataSet)});
 		path.animate({d: dataPlots.join(',')}, 350, mina.easeout);
 	}
 
 	function drawPie(){
-		console.log('pie chart not implemented yet');
 		var sum = _.reduce(options.data, function(m,d){
 			return m+ d.values[0];
 		},0);
 
-		console.log(sum);
 		var sumDeg = 0;
 		var data = options.data;
 
@@ -310,11 +310,13 @@ var SnapChart = function(domId, options){
 					'A'+(radius).toString(),
 					radius,
 					0, flag2, 1,
-					origo.x+xto,origo.y+yto,		
+					origo.x+xto,origo.y+yto,        
 					'Z'
 				];
+				
+
 				var p = snap.path(path.join(','));
-				p.attr({fill:dataSet.color});
+				p.attr({fill: getFill(dataSet)});
 				p.animate( { transform: "r" + (-90+(sumDeg*180/Math.PI))  +","+origo.x+","+origo.y }, 500 );
 				sumDeg += deg;
 			} else{
@@ -326,10 +328,116 @@ var SnapChart = function(domId, options){
 		
 	}
 
+	function getFill(dataSet){
+		var patterns = {
+			stripes:function(){
+				var p = snap.path("M10-5-10,15M15,0,0,15M0-5-20,15").attr({
+					fill: "none",
+					stroke: dataSet.color,
+					strokeWidth: 5
+				});
+				return p.pattern(0, 0, 10, 10);
+			},
+			triangles:function(){
+				var p = snap.path("M10-5-10,15").attr({
+					fill: "none",
+					stroke: dataSet.color,
+					strokeWidth: 6
+				});
+				return p.pattern(0, 0, 10, 10);
+			},
+			zigzag:function(){
+				var p = snap.path("M10-5-10,15,15,0,0,15,0-5-20,15").attr({
+					fill: "none",
+					stroke: dataSet.color,
+					strokeWidth: 1
+				});
+				return p.pattern(0, 0, 10, 10);
+			},
+			dots:function(){
+				var p = snap.circle(2.5,2.5,2).attr({
+					fill: dataSet.color,
+					stroke: "none",
+					strokeWidth: 0
+				});
+				return p.pattern(0, 0, 5, 5);
+			},
+			none:function(){return dataSet.color;}
+		};
+		var fill = patterns[dataSet.pattern] || patterns.none;
+		return fill();
+	}
+
 	this.update = function(options){
 		console.log('not implemeted yet');
 	};
-
 	init();
 	return that;
 };
+
+// function SnapLegend(domid, options){
+
+// 	var domNode = document.getElementById(domid.replace('#',''));
+
+// 	var series = _.map(options.data, function(s){
+// 		return '<div class="series"><div class="legend-elem-color" style="background-color:'+s.color+'"></div> '+s.name + '</div>';
+// 	});
+// 	series.unshift('<div class="legend">');
+// 	series.push('</div>');
+// 	domNode.innerHTML = series.join(' ');
+// }   
+
+function SnapLegend(domid, options){
+	function getFill(dataSet){
+		var patterns = {
+			stripes:function(){
+				var p = Snap().path("M10-5-10,15M15,0,0,15M0-5-20,15").attr({
+					fill: "none",
+					stroke: dataSet.color,
+					strokeWidth: 5
+				});
+				return p.pattern(0, 0, 10, 10);
+			},
+			triangles:function(){
+				var p = Snap().path("M10-5-10,15").attr({
+					fill: "none",
+					stroke: dataSet.color,
+					strokeWidth: 6
+				});
+				return p.pattern(0, 0, 10, 10);
+			},
+			zigzag:function(){
+				var p = Snap().path("M10-5-10,15,15,0,0,15,0-5-20,15").attr({
+					fill: "none",
+					stroke: dataSet.color,
+					strokeWidth: 1
+				});
+				return p.pattern(0, 0, 10, 10);
+			},
+			dots:function(){
+				var p = Snap().circle(2.5,2.5,2).attr({
+					fill: dataSet.color,
+					stroke: "none",
+					strokeWidth: 0
+				});
+				return p.pattern(0, 0, 5, 5);
+			},
+			none:function(){return dataSet.color;}
+		};
+		var fill = patterns[dataSet.pattern] || patterns.none;
+		return fill();
+	}
+
+	var domNode = document.getElementById(domid.replace('#',''));
+
+	var series = _.map(options.data, function(s,k){
+		return '<div class="series"><svg class="legend-elem-color data-series-'+k+'" ></svg> '+s.name + '</div>';
+	});
+	series.unshift('<div class="legend">');
+	series.push('</div>');
+	domNode.innerHTML = series.join(' ');
+	_.each(options.data,function(s,k){
+		var selector = domid + ' .data-series-'+k;
+		Snap(selector).rect(0,0,15,15).attr({fill:getFill(s)});
+	});
+}   

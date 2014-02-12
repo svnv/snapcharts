@@ -1,13 +1,12 @@
 var SnapChart = function(domId, options){
 	var that = this,
-		snap = Snap(domId),
+		domNode = document.getElementById(domId.replace('#','')),
+		svgChildNode = domNode.innerHTML='<svg width="100%" height="100%"></svg>';
+		snap = Snap(domId+' svg'),
 		extremes = {},
 		axis = {},
 		plots = [],
-		yLabelTransform = options.yLabelTransform || function(y){return y.toString();},
-		domNode = document.getElementById(domId.replace('#',''));
-
-	snap.clear();
+		yLabelTransform = options.yLabelTransform || function(y){return y.toString();};
 
 	this.types = {
 		bar: 'bar',
@@ -315,17 +314,16 @@ var SnapChart = function(domId, options){
 				];
 				
 
-				var p = snap.path(path.join(','));
+				var p = snap.path(path.join(' '));
 				p.attr({fill: getFill(dataSet)});
 				p.animate( { transform: "r" + (-90+(sumDeg*180/Math.PI))  +","+origo.x+","+origo.y }, 500 );
 				sumDeg += deg;
 			} else{
 				var c = snap.circle(origo.x, origo.y, 0);
-				c.attr({fill:dataSet.color});
+				c.attr({fill:getFill(dataSet)});
 				c.animate({r:radius},500);
 			}
 		}
-		
 	}
 
 	function getFill(dataSet){

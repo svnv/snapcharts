@@ -34,13 +34,13 @@
         <div class="page-header">
           <h1>Snapcharts</h1>
           <p>Snapcharts is a small open source charting library built on top of <a href="http://snapsvg.io">snap.svg</a>. It is currently a work in progress and should not be used by anyone for anything yet.</p>
-          <p><a href="https://github.com/svnv/snapcharts">You can find the github repository for snapchat here</a>.</p>
+          <p><a href="https://github.com/svnv/snapcharts">You can find the github repository for snapcharts here</a>.</p>
           <p>Snapcharts is available under an Apache 2 license.</p>
         </div>
         <h2>Bar chart</h2>
         <p class="lead">A bar chart with 2 columns per datapoint.</p>
-        <svg id="bar-chart" class="chart">
-        </svg>
+        <div id="bar-chart" class="chart">
+        </div>
         <pre><code class="language-javascript">
 var options = {
   type:'bar',
@@ -59,8 +59,8 @@ var chart = new SnapChart('#bar-chart',options);
         </code></pre>
         <h2>Line chart</h2>
         <p class="lead">A line chart with two data series.</p>
-        <svg id="line-chart" class="chart">
-        </svg>
+        <div id="line-chart" class="chart">
+        </div>
         <pre><code class="language-javascript">        
  var options = {
     type:'line',
@@ -80,8 +80,8 @@ var chart = new SnapChart('#bar-chart',options);
         </code></pre>
         <h2>Area chart</h2>
         <p class="lead">An area chart with overlapping areas.</p>
-        <svg id="area-chart" class="chart">
-        </svg>
+        <div id="area-chart" class="chart">
+        </div>
         <pre><code class="language-javascript">        
 var options = {
   type:'area',
@@ -101,7 +101,7 @@ var chart = new SnapChart('#area-chart',options);
         </code></pre>
         <h2>Pie chart</h2>
         <p class="lead">A pie chart with fill patterns.</p>
-        <svg id="pie-chart" class="chart"></svg>
+        <div id="pie-chart" class="chart"></div>
         <div id="legend"></div>
 
         <pre><code class="language-javascript">

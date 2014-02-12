@@ -52,7 +52,6 @@ var chart = new SnapChart('#area-chart',options);
       color: 'rgba(0,175,255,.6)',
       name: 'Segment A',
       pattern:'triangles'
-
     },
     {
       values: [0.2],
@@ -74,11 +73,11 @@ var chart = new SnapChart('#area-chart',options);
   var legend = new SnapLegend('#legend',options);
 
 // reloading site on focus so i don't have to press cmd-r
-window.addEventListener("focus", function(event) {
-	window.location.reload();
- }, false);
+// window.addEventListener("focus", function(event) {
+// 	window.location.reload();
+//  }, false);
 
-window.onresize = function(event) {
-  var chart = SnapChart('#pie-chart',options);
-};
+// window.onresize = function(event) {
+//   var chart = SnapChart('#pie-chart',options);
+// };
 console.log('End of app.js');

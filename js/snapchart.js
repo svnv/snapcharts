@@ -386,10 +386,10 @@ var SnapChart = function(domId, options){
 // }   
 
 function SnapLegend(domid, options){
-	function getFill(dataSet){
+	function getFill(dataSet, snap){
 		var patterns = {
 			stripes:function(){
-				var p = Snap().path("M10-5-10,15M15,0,0,15M0-5-20,15").attr({
+				var p = snap.path("M10-5-10,15M15,0,0,15M0-5-20,15").attr({
 					fill: "none",
 					stroke: dataSet.color,
 					strokeWidth: 5
@@ -397,7 +397,7 @@ function SnapLegend(domid, options){
 				return p.pattern(0, 0, 10, 10);
 			},
 			triangles:function(){
-				var p = Snap().path("M10-5-10,15").attr({
+				var p = snap.path("M10-5-10,15").attr({
 					fill: "none",
 					stroke: dataSet.color,
 					strokeWidth: 6
@@ -405,7 +405,7 @@ function SnapLegend(domid, options){
 				return p.pattern(0, 0, 10, 10);
 			},
 			zigzag:function(){
-				var p = Snap().path("M10-5-10,15,15,0,0,15,0-5-20,15").attr({
+				var p = snap.path("M10-5-10,15,15,0,0,15,0-5-20,15").attr({
 					fill: "none",
 					stroke: dataSet.color,
 					strokeWidth: 1
@@ -413,7 +413,7 @@ function SnapLegend(domid, options){
 				return p.pattern(0, 0, 10, 10);
 			},
 			dots:function(){
-				var p = Snap().circle(2.5,2.5,2).attr({
+				var p = snap.circle(2.5,2.5,2).attr({
 					fill: dataSet.color,
 					stroke: "none",
 					strokeWidth: 0
@@ -436,6 +436,7 @@ function SnapLegend(domid, options){
 	domNode.innerHTML = series.join(' ');
 	_.each(options.data,function(s,k){
 		var selector = domid + ' .data-series-'+k;
-		Snap(selector).rect(0,0,15,15).attr({fill:getFill(s)});
+		var snap = Snap(selector);
+		snap.rect(0,0,15,15).attr({fill:getFill(s,snap)});
 	});
 }   

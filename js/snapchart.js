@@ -1,7 +1,7 @@
 var SnapChart = function(domId, options){
 	var that = this,
 		domNode = document.getElementById(domId.replace('#','')),
-		svgChildNode = domNode.innerHTML='<svg width="100%" height="100%"></svg>';
+		svgChildNode = domNode.innerHTML='<svg viewBox="0 0 '+domNode.offsetWidth+' '+domNode.offsetHeight+'" ></svg>';
 		snap = Snap(domId+' svg'),
 		extremes = {},
 		axis = {},

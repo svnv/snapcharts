@@ -6,7 +6,25 @@ var SnapChart = function(domId, options){
 		extremes = {},
 		axis = {},
 		plots = [],
-		yLabelTransform = options.yLabelTransform || function(y){return y.toString();};
+		yLabelTransform = options.yLabelTransform || function(y){return y.toString();},
+		show = merge(options.show , {
+			axis: true,
+			labels: true,
+			gridlines: true
+		}),
+		colors = merge(options.colors, {
+			axis:'rgba(0,0,0,1)',
+			labels: 'rgba(0,0,0,1)',
+			gridlines: 'rgba(0,0,0,0.1)'
+		});
+
+	function merge(dict, defaults){
+		var merged = defaults;
+		if(dict){
+			merged = map(defaults, function(v,k){return dict[k] || v;});
+		}
+		return merged;
+	}
 
 	this.types = {
 		bar: 'bar',
@@ -23,7 +41,7 @@ var SnapChart = function(domId, options){
 	};
 
 	function init(){
-		populateExtremes(options);  
+		extremes = getExtremes(options);  
 		if(options.type === 'pie'){
 			drawPie();
 		} else {
@@ -35,11 +53,8 @@ var SnapChart = function(domId, options){
 		}
 	}
 
-	function populateExtremes(options){
-		
-		var dataLimits = getDataLimits(options.data);
-
-		extremes = {
+	function getExtremes(options){
+		var ex = {
 			positions:{
 				axis:{
 					min:{
@@ -62,69 +77,71 @@ var SnapChart = function(domId, options){
 					}   
 				}   
 			},
-			data:{
-				limits: {
-					min: dataLimits.min,
-					max: dataLimits.max
-				}
-			}               
+			data: getMaxMinLen(options.data)     
 		};
 
-		// adding values calulcated from initial dataset
-		extremes.plots = {
-			width: ((extremes.positions.axis.max.x - extremes.positions.axis.min.x) / dataLimits.len)
+		// adding ex values that depend on existing ex values
+		ex.plots = {
+			width: ((ex.positions.axis.max.x - ex.positions.axis.min.x) / ex.data.len)
 		};
 
-		extremes.yLabels = calculateYaxisSteps();
-
+		ex.yLabels = getYaxisSteps(ex.data.max, ex.data.min);
+		return ex;
 	}
 
-	function getDataLimits(data){
+	function getMaxMinLen(dataSets){
+		// Returns max,min and longest length from the data sets
 		var maxLen = 0;
-		var maxData = data[0].values[0];
-		for(var i = 0, len = data.length; i < len; i++){
-			var dataSet = data[i];
-			result = getDataSetLimits(dataSet);
-			maxLen = maxLen < result.len ? result.len : maxLen;
-			maxData = maxData < result.max ? result.max : maxData;
+		var maxData = dataSets[0].values[0];
+		var minData = dataSets[0].values[0];
+		for(var i = 0, len = dataSets.length; i < len; i++){
+			var dataSet = dataSets[i];
+			values = getDataSetMaxMinLen(dataSet);
+			maxLen = maxLen < values.len ? values.len : maxLen;
+			maxData = maxData < values.max ? values.max : maxData;
+			minData = minData > values.min ? values.min : minData;
 		}
-		return {len:maxLen, max:maxData, min:0};
+		return {len:maxLen, max:maxData, min:minData};
 	}
 
-	function getDataSetLimits(dataSet){
+	function getDataSetMaxMinLen(dataSet){
 		var len = dataSet.values.length;
 		var max = dataSet.values[0];
+		var min = dataSet.values[0];
 		for (var i = 1; i<len;i++){
 			var val = dataSet.values[i];
 			max = max < val ? val : max;
+			min = min > val ? val : min;
 		}
-		return {len:len, max:max};
+		return {len:len, max:max, min:min};
 	}
 
-	function calculateYaxisSteps(){
+	function getYaxisSteps(max,min){
 		// this might seem counter intuitive but using neg significant magnitude
 		// to avoid float errors for positive numbers less than 1
 		var numSteps,
-			min,
-			max,
 			steps = [],
 			negSignificantMagnitude,
 			significantDigit;
 
-		var dataLimitMaxString = extremes.data.limits.max.toString();
-		if(extremes.data.limits.max > 1){
-			significantDigit = parseInt(dataLimitMaxString[0]);
+		// Max values
+		if(max > 1){
+			significantDigit = parseInt(max.toString()[0]);
 			numSteps = significantDigit + 1;
-			var exponent = Math.floor(Math.log(extremes.data.limits.max)/Math.log(10));
+			var exponent = Math.floor(Math.log(max)/Math.log(10));
 			negSignificantMagnitude = 1/Math.pow(10, exponent);
-		} else if (extremes.data.limits.max>0){
+		} else if (max>0){
 			var negExponent = 0;
 			do{
 				negExponent++;
-				significantDigit = Math.floor(extremes.data.limits.max*Math.pow(10,negExponent));
+				significantDigit = Math.floor(max*Math.pow(10,negExponent));
 			} while(significantDigit < 1);
 			negSignificantMagnitude = Math.pow(10,negExponent);
 		}
+
+		//Min values
+
+		
 		numSteps = significantDigit+1;  
 		for (var i = 0; i <= numSteps; i++){
 				var step = i/negSignificantMagnitude;
@@ -139,20 +156,14 @@ var SnapChart = function(domId, options){
 	}
 
 	function calculteScaledY(y){
-		var ratio = y / extremes.yLabels.max;
+		var ratio = y / (extremes.yLabels.max - extremes.yLabels.min);
 		return (extremes.positions.axis.max.y - extremes.positions.axis.min.y)*ratio;
 	}
 
 	function drawAxis(){
 		var axisLineOptions = {stroke:'rgba(0,0,0,.5)', strokeWidth:1};
 		
-		// axis.y = snap.line(
-		//  extremes.positions.axis.min.x,
-		//  extremes.positions.axis.min.y,
-		//  extremes.positions.axis.min.x,
-		//  extremes.positions.axis.max.y);
-		// axis.y.attr(axisLineOptions);
-
+		// xaxis
 		axis.x = snap.line(
 			extremes.positions.axis.min.x,
 			extremes.positions.axis.max.y,
@@ -162,7 +173,7 @@ var SnapChart = function(domId, options){
 
 		// xaxis lables
 		var xOffset = extremes.plots.width/2;
-		axis.xLables = _.map(options.labels, function(label, i){
+		axis.xLables = map(options.labels, function(label, i){
 			var x = extremes.positions.axis.min.x + xOffset + (extremes.plots.width*i);
 			var y = extremes.positions.axis.max.y + 15;
 			var text = snap.text(x, y, label);
@@ -171,7 +182,7 @@ var SnapChart = function(domId, options){
 		});
 
 		// yaxis labels     
-		axis.yLabels = _.map(extremes.yLabels.steps, function(step, i){
+		axis.yLabels = map(extremes.yLabels.steps, function(step, i){
 			var x = extremes.positions.axis.min.x - 5;
 			var y = extremes.positions.axis.max.y - calculteScaledY(step);
 			var label = yLabelTransform(step);
@@ -182,8 +193,7 @@ var SnapChart = function(domId, options){
 
 		// yaxis gridlines
 		var axisGridLineOptions = {stroke:'rgba(0,0,0,.1)', strokeWidth:1};
-
-		axis.yGridLines = _.map(extremes.yLabels.steps, function(step, i){
+		axis.yGridLines = map(extremes.yLabels.steps, function(step, i){
 			if(step === 0) return;
 			var y = extremes.positions.axis.max.y - calculteScaledY(step);
 			var line = snap.line(extremes.positions.axis.min.x, y, extremes.positions.axis.max.x, y);
@@ -206,7 +216,7 @@ var SnapChart = function(domId, options){
 		var barWidth = extremes.plots.width*barWidthRatio/numSeries;
 		var barMarginWidth = extremes.plots.width*barMarginRatio;
 
-		plots = _.map(dataSet.values, function(value, key){
+		plots = map(dataSet.values, function(value, key){
 			var x = extremes.positions.axis.min.x + (key*barWidth*numSeries) + (barWidth*i) + (key*2*barMarginWidth) + barMarginWidth;
 			var y = extremes.positions.axis.max.y;
 			var width = barWidth;
@@ -226,7 +236,7 @@ var SnapChart = function(domId, options){
 		var preAnimationPlots = [];
 		var dataPlots = [];
 		var yMaxString = extremes.positions.axis.max.y;
-		_.each(dataSet.values, function(value, key){
+		each(dataSet.values, function(value, key){
 			var pathLetter = 'L';
 			if(first){
 				pathLetter = 'M';
@@ -249,7 +259,7 @@ var SnapChart = function(domId, options){
 		var preAnimationPlots = [];
 		var dataPlots = [];
 		var yMaxString = extremes.positions.axis.max.y;
-		_.each(dataSet.values, function(value, key){
+		each(dataSet.values, function(value, key){
 			var pathLetter = 'L';
 			var x = plotPointWidth/2 + (plotPointWidth*key) + extremes.positions.axis.min.x;
 			var y = extremes.positions.axis.max.y - calculteScaledY(value);
@@ -278,9 +288,11 @@ var SnapChart = function(domId, options){
 	}
 
 	function drawPie(){
-		var sum = _.reduce(options.data, function(m,d){
-			return m+ d.values[0];
+
+		var sum = reduce(options.data, function(m,d){
+			return m + Math.abs(d.values[0]);
 		},0);
+
 
 		var sumDeg = 0;
 		var data = options.data;
@@ -294,7 +306,7 @@ var SnapChart = function(domId, options){
 
 		for (var i = 0, len = data.length; i < len; i++){
 			var dataSet = data[i];
-			var ratio  = dataSet.values[0]/sum;
+			var ratio  = Math.abs(dataSet.values[0])/sum;
 			if (ratio < 1){
 				var deg = ratio * 2 * Math.PI;
 				var xto = radius*Math.cos(deg);
@@ -366,26 +378,99 @@ var SnapChart = function(domId, options){
 		return fill();
 	}
 
+	function map(iterable, func){
+		// Works almost like underscore map, but dicts are returned as a
+		// dict (with the same key as before)
+		var result;
+		if (iterable instanceof Array){
+			result = [];
+			for(var i = 0, len = iterable.length; i<len; i++){
+				result.push(func(iterable[i],i));
+			}
+		} else{
+			result = {};
+			for (var key in iterable) {
+				if (iterable.hasOwnProperty(key)) {
+					result[key] = (func(iterable[key],key));
+				}
+			}
+		}
+		return result;
+	}
+	function reduce(iterable, func, init){
+		var result = init || 0;
+		if (iterable instanceof Array){
+			for(var i = 0, len = iterable.length; i<len; i++){
+				result = func(result,iterable[i],i);
+			}
+		} else{
+			result = {};
+			for (var key in iterable) {
+				if (iterable.hasOwnProperty(key)) {
+					result = func(result, iterable[key], key);
+				}
+			}
+		}
+		return result;
+	}
+	function each(iterable, func){
+		if (iterable instanceof Array){
+			for(var i = 0, len = iterable.length; i<len; i++){
+				func(iterable[i],i);
+			}
+		} else{
+			result = {};
+			for (var key in iterable) {
+				if (iterable.hasOwnProperty(key)) {
+					func(iterable[key], key);
+				}
+			}
+		}
+	}
+
 	this.update = function(options){
 		console.log('not implemeted yet');
 	};
 	init();
 	return that;
 };
-
-// function SnapLegend(domid, options){
-
-// 	var domNode = document.getElementById(domid.replace('#',''));
-
-// 	var series = _.map(options.data, function(s){
-// 		return '<div class="series"><div class="legend-elem-color" style="background-color:'+s.color+'"></div> '+s.name + '</div>';
-// 	});
-// 	series.unshift('<div class="legend">');
-// 	series.push('</div>');
-// 	domNode.innerHTML = series.join(' ');
-// }   
+   
 
 function SnapLegend(domid, options){
+	function map(iterable, func){
+		// Works almost like underscore map, but dicts are returned as a
+		// dict (with the same key as before)
+		var result;
+		if (iterable instanceof Array){
+			result = [];
+			for(var i = 0, len = iterable.length; i<len; i++){
+				result.push(func(iterable[i],i));
+			}
+		} else{
+			result = {};
+			for (var key in iterable) {
+				if (iterable.hasOwnProperty(key)) {
+					result[key] = (func(iterable[key],key));
+				}
+			}
+		}
+		return result;
+	}
+	function each(iterable, func){
+		if (iterable instanceof Array){
+			for(var i = 0, len = iterable.length; i<len; i++){
+				func(iterable[i],i);
+			}
+		} else{
+			result = {};
+			for (var key in iterable) {
+				if (iterable.hasOwnProperty(key)) {
+					func(iterable[key], key);
+				}
+			}
+		}
+	}
+
 	function getFill(dataSet, snap){
 		var patterns = {
 			stripes:function(){
@@ -428,15 +513,17 @@ function SnapLegend(domid, options){
 
 	var domNode = document.getElementById(domid.replace('#',''));
 
-	var series = _.map(options.data, function(s,k){
+	var series = map(options.data, function(s,k){
 		return '<div class="series"><svg class="legend-elem-color data-series-'+k+'" ></svg> '+s.name + '</div>';
 	});
 	series.unshift('<div class="legend">');
 	series.push('</div>');
 	domNode.innerHTML = series.join(' ');
-	_.each(options.data,function(s,k){
+	each(options.data,function(s,k){
 		var selector = domid + ' .data-series-'+k;
 		var snap = Snap(selector);
 		snap.rect(0,0,15,15).attr({fill:getFill(s,snap)});
 	});
+
+
 }   
